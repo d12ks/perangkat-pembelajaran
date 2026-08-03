@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Perangkat Pembelajaran - SMK Negeri 1 Mondokan</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .login-box { max-width: 400px; margin: 100px auto; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
+        input[type="text"], input[type="password"], input[type="number"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; font-weight: bold; width: 100%; }
+        button:hover { background-color: #2ecc71; }
+        .btn-inline { width: auto; }
+        .btn-word { background-color: #2980b9; margin-left: 10px; }
+        .btn-word:hover { background-color: #3498db; }
+        .btn-tambah { background-color: #f39c12; margin-top: 5px; margin-bottom: 20px; }
+        .btn-tambah:hover { background-color: #e67e22; }
+        .btn-hapus { background-color: #e74c3c; padding: 5px 12px; font-size: 12px; margin-top: 0; width: auto; }
+        .btn-hapus:hover { background-color: #c0392b; }
+        
+        #loading { display: none; color: #2980b9; margin-top: 10px; font-weight: bold; }
+        #app-container { display: none; }
+        #hasil-dokumen { margin-top: 30px; padding: 40px; border: 1px solid #ccc; background: #fff; display: none; color: #000; }
+        
+        /* CSS Kotak Materi Dinamis */
+        .materi-box { background: #fafafa; border: 2px dashed #bdc3c7; padding: 15px; border-radius: 6px; margin-bottom: 15px; position: relative; }
+        .materi-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; margin-bottom: 15px; }
+        .materi-header h4 { margin: 0; color: #2c3e50; font-size: 15px; }
+
+        /* CSS Checklist Form & Preview */
+        .grid-checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: #fdfdfd;}
+        .checklist-item { display: flex; align-items: center; font-size: 14px;}
+        .checklist-item input[type="checkbox"], .ada-insersi-group input[type="checkbox"] { margin-right: 10px; appearance: none; width: 16px; height: 16px; border: 1px solid #000; cursor: pointer; position: relative; background: #fff;}
+        .checklist-item input[type="checkbox"]:checked::after, .ada-insersi-group input[type="checkbox"]:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 14px; color: #000;}
+
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;}
+        .preview-item { display: flex; align-items: center; }
+        .check-box-visual { width: 16px; height: 16px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; margin-right: 8px; font-weight: bold; }
+        
+        /* CSS Khusus Cetak/Word */
+        .kop-surat { text-align: center; line-height: 1.2; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px; }
+        .kop-surat h3, .kop-surat h2, .kop-surat p { margin: 2px 0; }
+        .table-custom { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        .table-custom th, .table-custom td { border: 1px solid #000; padding: 8px; vertical-align: top; }
+        .table-custom th { background-color: #f2f2f2; text-align: center; }
+        .table-noborder { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+        .table-noborder td { padding: 4px; vertical-align: top; }
+        .table-noborder td:first-child { width: 25%; font-weight: bold; }
+        .ttd-container { width: 100%; margin-top: 40px; }
+        .ttd-table { width: 100%; border: none; text-align: left; }
+        .ttd-table td { width: 50%; padding: 0; vertical-align: bottom; }
+        .ttd-table .kanan { padding-left: 15%; }
+        
+        .rpp-section { background: #e8f8f5; padding: 15px; border-radius: 5px; border: 1px solid #1abc9c; margin-bottom: 20px; display: none; }
+
+        @media print { .no-print, .login-box { display: none !important; } #hasil-dokumen { border: none; display: block; margin-top: 0; } }
+    </style>
+</head>
+<body>
+
+    <!-- HALAMAN LOGIN -->
+    <div class="login-box" id="login-container">
+        <h2 style="border-bottom:none;">Login Sistem</h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 20px;">Generator Perangkat Pembelajaran SMK Negeri 1 Mondokan</p>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="login-user" placeholder="Masukkan Username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-pass" placeholder="Masukkan Password">
+        </div>
+        <button onclick="prosesLogin()">Masuk</button>
+        <p id="loading">Memeriksa kredensial...</p>
+    </div>
+
+    <!-- HALAMAN UTAMA GENERATOR -->
+    <div id="app-container">
+        <div class="container no-print">
+            <h2>Sistem Generator Perangkat Pembelajaran</h2>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <span style="font-weight:bold; color:#2c3e50;">Halo, <span id="sapaan-guru">Guru</span>!</span>
+                <button class="btn-word btn-inline" style="background:#e74c3c; padding:5px 10px; font-size:12px; border-radius:4px; margin-left:10px;" onclick="location.reload()">Logout</button>
+            </div>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Satuan Pendidikan:</label>
+                    <input type="text" id="sekolah" value="SMK Negeri 1 Mondokan" readonly style="background:#ecf0f1;">
+                </div>
+                <div class="form-group">
+                    <label>Nama Kepala Sekolah:</label>
+                    <input type="text" id="kepsek" value="HINDUN KHOZANAH, S.Pd., M.Pd.">
+                </div>
+                <div class="form-group">
+                    <label>NIP Kepala Sekolah:</label>
+                    <input type="text" id="nip-kepsek" value="198310122009032004">
+                </div>
+                <div class="form-group">
+                    <label>Tempat & Tanggal Pembuatan:</label>
+                    <input type="text" id="tanggal" value="Sragen, Juli 2026">
+                </div>
+                <div class="form-group">
+                    <label>Nama Guru Pengampu:</label>
+                    <input type="text" id="guru" readonly style="background:#ecf0f1;">
+                </div>
+                <div class="form-group">
+                    <label>NIP Guru:</label>
+                    <input type="text" id="nip-guru" readonly style="background:#ecf0f1;">
+                </div>
+                <div class="form-group">
+                    <label>Mata Pelajaran:</label>
+                    <input type="text" id="mapel" placeholder="Contoh: Pendidikan Pancasila">
+                </div>
+                <div class="form-group">
+                    <label>Fase / Kelas:</label>
+                    <input type="text" id="kelas" placeholder="Contoh: F / XII">
+                </div>
+                <!-- FIELD BARU: TAHUN AJARAN -->
+                <div class="form-group">
+                    <label>Tahun Ajaran:</label>
+                    <input type="text" id="tahun-ajaran" placeholder="Contoh: 2026/2027">
+                </div>
+                <div class="form-group">
+                    <label>Alokasi Waktu Total (JP):</label>
+                    <input type="text" id="jp" placeholder="Contoh: 2 x 45 Menit (90 JP)">
+                </div>
+            </div>
+
+            <hr style="margin: 20px 0;">
+
+            <!-- AREA KOTAK MATERI DINAMIS (ELEMEN, CP, LINGKUP MATERI) -->
+            <h3 style="color: #2980b9; font-size: 16px; margin-bottom: 5px;">Daftar Materi Pembelajaran</h3>
+            <p style="font-size: 12px; color: #7f8c8d; margin-top: 0; margin-bottom: 15px;">Setiap kotak berisi 1 paket Elemen, CP, dan Lingkup Materi. Klik "+ Tambah Kotak Materi" jika terdapat lebih dari satu paket.</p>
+            
+            <div id="materi-container">
+                <!-- Box Materi #1 (Default) -->
+                <div class="materi-box">
+                    <div class="materi-header">
+                        <h4>Kotak Materi #1</h4>
+                    </div>
+                    <div class="form-group">
+                        <label>Elemen:</label>
+                        <input type="text" class="input-elemen" placeholder="Contoh: Pancasila">
+                    </div>
+                    <div class="form-group">
+                        <label>Capaian Pembelajaran (CP):</label>
+                        <textarea class="input-cp" rows="3" placeholder="Ketikkan deskripsi Capaian Pembelajaran..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Lingkup Materi:</label>
+                        <input type="text" class="input-lingkup" placeholder="Contoh: Kedudukan Pancasila sebagai Ideologi Terbuka">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-inline btn-tambah" onclick="tambahMateri()">+ Tambah Kotak Materi</button>
+
+            <hr style="margin: 20px 0;">
+
+            <!-- PILIHAN JENIS DOKUMEN -->
+            <div class="form-group">
+                <label style="color: #c0392b; font-size: 18px; font-weight: bold;">Pilih Jenis Dokumen yang Akan Dibuat:</label>
+                <select id="jenis-dokumen" onchange="sesuaikanForm()" style="font-size: 16px; font-weight: bold; border: 2px solid #c0392b;">
+                    <option value="">-- Pilih Dokumen --</option>
+                    <option value="CP">1. Capaian Pembelajaran (CP)</option>
+                    <option value="ATP">2. Alur Tujuan Pembelajaran (ATP)</option>
+                    <option value="KKTP">3. Kriteria Ketercapaian TP (KKTP)</option>
+                    <option value="PROTA">4. Program Tahunan (Prota)</option>
+                    <option value="PROMES">5. Program Semester (Promes)</option>
+                    <option value="RPP">6. RPP Deep Learning</option>
+                </select>
+            </div>
+
+            <!-- BLOK KHUSUS RPP (Tampil jika RPP dipilih) -->
+            <div id="blok-khusus-rpp" class="rpp-section">
+                <h3 style="color: #16a085; font-size: 16px; margin-top: 0;">Pengaturan Khusus RPP Deep Learning</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Dimensi Profil Pelajar Pancasila:</label>
+                        <div class="grid-checklist">
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Keimanan dan Ketakwaan"> Keimanan & Ketakwaan</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Kolaborasi"> Kolaborasi</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Kewargaan"> Kewargaan</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Kemandirian"> Kemandirian</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Penalaran Kritis"> Penalaran Kritis</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Kesehatan"> Kesehatan</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Kreativitas"> Kreativitas</label>
+                            <label class="checklist-item"><input type="checkbox" name="dimensi" value="Komunikasi"> Komunikasi</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Pengaturan Insersi Perangkat Pembelajaran:</label>
+                        <div class="grid-checklist">
+                            <div class="checklist-item ada-insersi-group" style="grid-column: span 2;">
+                                <input type="checkbox" id="check-ada-insersi" onchange="togglePilihanInsersi()"> 
+                                <span style="font-weight:bold; color: #d35400;">Adakah muatan insersi?</span>
+                            </div>
+                        </div>
+                        <div id="pilihan-insersi-group" style="display:none; margin-top:10px;">
+                            <label style="font-size: 12px; color: #7f8c8d;">Pilih Muatan Insersi:</label>
+                            <div class="grid-checklist">
+                                <label class="checklist-item"><input type="checkbox" name="insersi" value="Perkoperasian"> Perkoperasian</label>
+                                <label class="checklist-item"><input type="checkbox" name="insersi" value="Kewirausahaan"> Kewirausahaan</label>
+                                <label class="checklist-item"><input type="checkbox" name="insersi" value="Cinta dan bangga rupiah"> Cinta & bangga rupiah</label>
+                                <label class="checklist-item"><input type="checkbox" name="insersi" value="Ekonomi Syariah"> Ekonomi Syariah</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Pertemuan (Khusus RPP):</label>
+                    <input type="number" id="jumlah-pertemuan" value="3" min="1" max="10">
+                </div>
+            </div>
+
+            <button class="btn-inline" onclick="buatDokumen()">1. Pratinjau Dokumen</button>
+            <button class="btn-word btn-inline" onclick="exportToWord('hasil-dokumen', 'Perangkat_Pembelajaran')">2. Unduh ke Word (.doc)</button>
+        </div>
+
+        <!-- Area Hasil Dokumen (Pratinjau) -->
+        <div class="container" id="hasil-dokumen">
+            <div class="kop-surat">
+                <p>PEMERINTAH PROVINSI JAWA TENGAH</p>
+                <p>DINAS PENDIDIKAN</p>
+                <h2 style="text-transform: uppercase;">SEKOLAH MENENGAH KEJURUAN NEGERI 1 MONDOKAN</h2>
+                <p style="font-size: 12px;">Jalan Mondokan – Sukodono Km. 1, Mondokan, Kabupaten Sragen, Jawa Tengah Kodepos 57271</p>
+                <p style="font-size: 12px;">Telepon 08112635557; Laman https://smknegeri1mondokan.sch.id; Pos-el: smkn1mondokan@gmail.com</p>
+            </div>
+            <h3 id="judul-dokumen" style="text-align: center; text-decoration: underline; margin-bottom: 20px;">DOKUMEN</h3>
+            <table class="table-noborder">
+                <tr><td>Nama Guru</td><td>: <span id="out-guru"></span></td></tr>
+                <tr><td>Mata Pelajaran</td><td>: <span id="out-mapel"></span></td></tr>
+                <tr><td>Satuan Pendidikan</td><td>: <span id="out-sekolah"></span></td></tr>
+                <tr><td>Fase / Kelas</td><td>: <span id="out-kelas"></span></td></tr>
+                <tr><td>Tahun Ajaran</td><td>: <span id="out-tahun-ajaran"></span></td></tr>
+                <tr><td>Alokasi Waktu</td><td>: <span id="out-jp"></span></td></tr>
+            </table>
+            
+            <div id="konten-dinamis" style="margin-top: 20px; margin-bottom: 30px;"></div>
+            
+            <div class="ttd-container no-print">
+                <table class="ttd-table">
+                    <tr>
+                        <td>
+                            <p>Mengetahui,<br>Kepala Sekolah</p><br><br><br>
+                            <p style="margin:0;"><b><span id="out-kepsek" style="text-decoration: underline;"></span></b></p>
+                            <p style="margin:0;">NIP. <span id="out-nip-kepsek"></span></p>
+                        </td>
+                        <td class="kanan">
+                            <p><span id="out-tanggal"></span><br>Guru Pengampu,</p><br><br><br>
+                            <p style="margin:0;"><b><span id="out-nama-guru-ttd" style="text-decoration: underline;"></span></b></p>
+                            <p style="margin:0;">NIP. <span id="out-nip-guru-ttd"></span></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT JAVASCRIPT -->
+    <script>
+        // PENTING: Masukkan Web App URL dari Google Apps Script Anda di sini
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzS6A4hBGPAymnopRhwgCG5wCf-j7_ABWuPIw6LDpyPLoeweuJr_FJkkjeWbqwe6r-tzA/exec";
+        
+        let materiCount = 1;
+
+        // Fungsi Login
+        function prosesLogin() {
+            var user = document.getElementById('login-user').value;
+            var pass = document.getElementById('login-pass').value;
+            
+            if(!user || !pass) {
+                alert("Harap isi Username dan Password!");
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify({ username: user, password: pass })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if(data.status === 'success') {
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('app-container').style.display = 'block';
+                    
+                    document.getElementById('guru').value = data.nama;
+                    document.getElementById('nip-guru').value = data.nip;
+                    document.getElementById('sapaan-guru').innerText = data.nama;
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                alert("Terjadi kesalahan jaringan. Pastikan URL GAS benar dan sudah di-deploy.");
+                console.error(error);
+            });
+        }
+
+        // Fungsi Menambah Kotak Materi
+        function tambahMateri() {
+            materiCount++;
+            const container = document.getElementById('materi-container');
+            const newBox = document.createElement('div');
+            newBox.className = 'materi-box';
+            newBox.innerHTML = `
+                <div class="materi-header">
+                    <h4>Kotak Materi #${materiCount}</h4>
+                    <button class="btn-hapus" onclick="hapusMateri(this)">Hapus</button>
+                </div>
+                <div class="form-group">
+                    <label>Elemen:</label>
+                    <input type="text" class="input-elemen" placeholder="Contoh: Undang-Undang Dasar">
+                </div>
+                <div class="form-group">
+                    <label>Capaian Pembelajaran (CP):</label>
+                    <textarea class="input-cp" rows="3" placeholder="Ketikkan deskripsi Capaian Pembelajaran..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Lingkup Materi:</label>
+                    <input type="text" class="input-lingkup" placeholder="Contoh: Perumusan UUD 1945">
+                </div>
+            `;
+            container.appendChild(newBox);
+        }
+
+        // Fungsi Menghapus Kotak Materi
+        function hapusMateri(btn) {
+            btn.closest('.materi-box').remove();
+        }
+
+        // Toggle Insersi RPP
+        function togglePilihanInsersi() {
+            const checkAda = document.getElementById('check-ada-insersi');
+            const groupPilihan = document.getElementById('pilihan-insersi-group');
+            groupPilihan.style.display = (checkAda.checked) ? 'block' : 'none';
+        }
+
+        // Tampilkan/Sembunyikan Form Khusus RPP
+        function sesuaikanForm() {
+            var jenis = document.getElementById('jenis-dokumen').value;
+            var blokRpp = document.getElementById('blok-khusus-rpp');
+            blokRpp.style.display = (jenis === 'RPP') ? 'block' : 'none';
+        }
+
+        // Checklist Visual RPP
+        function generateChecklistVisual(sourceElement, sourceData) {
+            const selectedItems = [];
+            const checkboxes = document.querySelectorAll(`input[name="${sourceElement}"]:checked`);
+            checkboxes.forEach((checkbox) => {
+                selectedItems.push(checkbox.value);
+            });
+            
+            let html = '<div class="preview-grid">';
+            sourceData.forEach((item) => {
+                const isChecked = selectedItems.includes(item.value);
+                const mark = isChecked ? '✓' : '&nbsp;';
+                html += `<div class="preview-item"><div class="check-box-visual">${mark}</div><span class="checklist-text">${item.text}</span></div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        // Fungsi Utama Membuat Pratinjau Dokumen
+        function buatDokumen() {
+            var jenis = document.getElementById('jenis-dokumen').value;
+            if (!jenis) {
+                alert("Pilih jenis dokumen terlebih dahulu!");
+                return;
+            }
+
+            // Bind Data Identitas Umum
+            document.getElementById('out-guru').innerText = document.getElementById('guru').value || '.........................';
+            document.getElementById('out-nama-guru-ttd').innerText = document.getElementById('guru').value || '.........................';
+            document.getElementById('out-nip-guru-ttd').innerText = document.getElementById('nip-guru').value || '.........................';
+            document.getElementById('out-mapel').innerText = document.getElementById('mapel').value;
+            document.getElementById('out-kelas').innerText = document.getElementById('kelas').value;
+            document.getElementById('out-tahun-ajaran').innerText = document.getElementById('tahun-ajaran').value;
+            document.getElementById('out-jp').innerText = document.getElementById('jp').value;
+            document.getElementById('out-sekolah').innerText = document.getElementById('sekolah').value;
+            document.getElementById('out-kepsek').innerText = document.getElementById('kepsek').value;
+            document.getElementById('out-nip-kepsek').innerText = document.getElementById('nip-kepsek').value;
+            document.getElementById('out-tanggal').innerText = document.getElementById('tanggal').value;
+            
+            // Pengambilan Data Seluruh Kotak Materi
+            const elemenInputs = document.querySelectorAll('.input-elemen');
+            const cpInputs = document.querySelectorAll('.input-cp');
+            const lingkupInputs = document.querySelectorAll('.input-lingkup');
+            
+            let listMateri = [];
+            for(let i = 0; i < elemenInputs.length; i++) {
+                listMateri.push({
+                    elemen: elemenInputs[i].value,
+                    cp: cpInputs[i].value,
+                    lingkup: lingkupInputs[i].value
+                });
+            }
+
+            var kontenDinamis = "";
+            var judul = "";
+
+            const dataDimensi = [
+                { value: "Keimanan dan Ketakwaan", text: "Keimanan dan Ketakwaan" },
+                { value: "Kolaborasi", text: "Kolaborasi" },
+                { value: "Kewargaan", text: "Kewargaan" },
+                { value: "Kemandirian", text: "Kemandirian" },
+                { value: "Penalaran Kritis", text: "Penalaran Kritis" },
+                { value: "Kesehatan", text: "Kesehatan" },
+                { value: "Kreativitas", text: "Kreativitas" },
+                { value: "Komunikasi", text: "Komunikasi" }
+            ];
+
+            const dataInsersi = [
+                { value: "Perkoperasian", text: "Perkoperasian" },
+                { value: "Kewirausahaan", text: "Kewirausahaan" },
+                { value: "Cinta dan bangga rupiah", text: "Cinta dan bangga rupiah" },
+                { value: "Ekonomi Syariah", text: "Ekonomi Syariah" }
+            ];
+
+            // Render Konten Berdasarkan Pilihan
+            if (jenis === 'CP') {
+                judul = "CAPAIAN PEMBELAJARAN";
+                let rows = "";
+                listMateri.forEach((m) => {
+                    rows += `<tr><td>${m.elemen}</td><td>${m.cp}</td></tr>`;
+                });
+                kontenDinamis = `
+                <table class="table-custom">
+                    <tr><th width="30%">Elemen</th><th>Capaian Pembelajaran</th></tr>
+                    ${rows}
+                </table>`;
+            } 
+            else if (jenis === 'ATP') {
+                judul = "ALUR TUJUAN PEMBELAJARAN (ATP)";
+                let blocks = "";
+                listMateri.forEach((m, idx) => {
+                    blocks += `
+                    <div style="margin-bottom:20px;">
+                        <p style="font-weight:bold; margin-bottom:5px;">Materi Pembelajaran #${idx+1}</p>
+                        <table class="table-noborder" style="margin-bottom:10px;">
+                            <tr><td style="width:20%">Elemen</td><td>: ${m.elemen}</td></tr>
+                            <tr><td>Capaian Pembelajaran</td><td>: ${m.cp}</td></tr>
+                        </table>
+                        <table class="table-custom">
+                            <tr><th width="5%">No</th><th>Lingkup Materi</th><th>Tujuan Pembelajaran</th><th>Dimensi Profil Pelajar Pancasila</th><th>Alokasi Waktu</th></tr>
+                            <tr><td>1</td><td>${m.lingkup}</td><td></td><td></td><td></td></tr>
+                        </table>
+                    </div>`;
+                });
+                kontenDinamis = blocks;
+            } 
+            else if (jenis === 'KKTP') {
+                judul = "KRITERIA KETERCAPAIAN TUJUAN PEMBELAJARAN";
+                let blocks = "";
+                listMateri.forEach((m, idx) => {
+                    blocks += `
+                    <div style="margin-bottom:20px;">
+                        <p style="font-weight:bold;">Lingkup Materi #${idx+1}: ${m.lingkup}</p>
+                        <table class="table-custom">
+                            <tr><th rowspan="2">Tujuan Pembelajaran</th><th colspan="4">Kriteria (%)</th><th colspan="4">Intervensi</th></tr>
+                            <tr><th>0-40</th><th>41-75</th><th>76-90</th><th>90-100</th><th>0-40</th><th>41-75</th><th>76-90</th><th>90-100</th></tr>
+                            <tr><td><br><br></td><td>Belum</td><td>Belum</td><td>Sudah</td><td>Sudah</td><td>Remidi Semua</td><td>Remidi Sebagian</td><td>Tidak Remidi</td><td>Pengayaan</td></tr>
+                        </table>
+                    </div>`;
+                });
+                kontenDinamis = blocks;
+            } 
+            else if (jenis === 'PROTA') {
+                judul = "PROGRAM TAHUNAN";
+                let rows = "";
+                listMateri.forEach((m, idx) => {
+                    rows += `<tr><td>${idx+1}</td><td>${m.elemen}</td><td>${m.lingkup}</td><td></td><td></td><td></td></tr>`;
+                });
+                kontenDinamis = `
+                <table class="table-custom">
+                    <tr><th width="5%">No</th><th>Elemen</th><th>Lingkup Materi</th><th>Tujuan Pembelajaran</th><th>Alokasi Waktu</th><th>Semester</th></tr>
+                    ${rows}
+                </table>`;
+            } 
+            else if (jenis === 'PROMES') {
+                judul = "PROGRAM SEMESTER";
+                let rows = "";
+                listMateri.forEach((m, idx) => {
+                    rows += `<tr><td>${idx+1}</td><td>${m.lingkup}</td><td></td><td></td><td></td></tr>`;
+                });
+                kontenDinamis = `
+                <table class="table-custom">
+                    <tr><th width="5%">No</th><th>Lingkup Materi</th><th>Bulan</th><th>Alokasi Waktu</th><th>Pekan</th></tr>
+                    ${rows}
+                </table>`;
+            } 
+            else if (jenis === 'RPP') {
+                judul = "RENCANA PELAKSANAAN PEMBELAJARAN DEEP LEARNING";
+                const dimensiVisual = generateChecklistVisual('dimensi', dataDimensi);
+                
+                let barisInsersiRPP = "";
+                if (document.getElementById('check-ada-insersi').checked) {
+                    const insersiVisual = generateChecklistVisual('insersi', dataInsersi);
+                    barisInsersiRPP = `<tr><td>Muatan Insersi</td><td>${insersiVisual}</td></tr>`;
+                }
+
+                let strElemen = listMateri.map(m => m.elemen).join('<br>• ');
+                let strLingkup = listMateri.map(m => m.lingkup).join('<br>• ');
+                let strCP = listMateri.map(m => m.cp).join('<br><br>');
+
+                var jmlPertemuan = document.getElementById('jumlah-pertemuan').value;
+                
+                kontenDinamis = `
+                <table class="table-custom">
+                    <tr><td colspan="2" style="background:#f2f2f2; font-weight:bold;">IDENTIFIKASI</td></tr>
+                    <tr><td width="30%">Elemen</td><td>• ${strElemen}</td></tr>
+                    <tr><td>Lingkup Materi</td><td>• ${strLingkup}</td></tr>
+                    <tr><td>Capaian Pembelajaran</td><td>${strCP}</td></tr>
+                    <tr><td>Dimensi Profil Lulusan</td><td>${dimensiVisual}</td></tr>
+                    ${barisInsersiRPP}
+                </table>`;
+
+                for (let i = 1; i <= jmlPertemuan; i++) {
+                    kontenDinamis += `
+                        <h4 style="margin-bottom:5px; margin-top:20px; background:#2980b9; color:#fff; padding:5px;">PENGALAMAN BELAJAR | Pertemuan Ke-${i}</h4>
+                        <table class="table-custom">
+                            <tr>
+                                <th width="20%">Tahap</th>
+                                <th width="20%">Kegiatan</th>
+                                <th>Deskripsi (Berkesadaran, Bermakna, Menggembirakan)</th>
+                            </tr>
+                            <tr>
+                                <td><strong>Awal</strong></td>
+                                <td>Pendahuluan</td>
+                                <td>Awal (berkesadaran, bermakna) .... menit <br><br></td>
+                            </tr>
+                            <tr>
+                                <td rowspan="3"><strong>Inti</strong></td>
+                                <td>Memahami</td>
+                                <td>Memahami .... menit <br><br></td>
+                            </tr>
+                            <tr>
+                                <td>Mengaplikasi</td>
+                                <td>Mengaplikasi .... menit <br><br></td>
+                            </tr>
+                            <tr>
+                                <td>Merefleksi</td>
+                                <td>Merefleksi .... menit <br><br></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Penutup</strong></td>
+                                <td>Kesimpulan & Asesmen</td>
+                                <td>Penutup .... menit <br><br></td>
+                            </tr>
+                        </table>
+                    `;
+                }
+            }
+
+            document.getElementById('judul-dokumen').innerText = judul;
+            document.getElementById('konten-dinamis').innerHTML = kontenDinamis;
+            document.getElementById('hasil-dokumen').style.display = 'block';
+        }
+
+        // Ekspor ke Word
+        function exportToWord(elementId, filename = 'Perangkat_Pembelajaran') {
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title><style>.table-noborder td:first-child {width: 25%; font-weight: bold;}.table-custom {width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;}.table-custom th, .table-custom td {border: 1px solid #000; padding: 8px; vertical-align: top;}.table-custom th {background-color: #f2f2f2; text-align: center;}.check-box-visual {width: 16px; height: 16px; border: 1px solid #000; display: table-cell; text-align: center; vertical-align: middle; font-weight: bold; font-family: 'Arial';}.ttd-table {width: 100%; border: none; text-align: left;}.ttd-table td {width: 50%; vertical-align: bottom;}.ttd-table .kanan {padding-left: 15%;}</style></head><body>";
+            var postHtml = "</body></html>";
+            
+            document.getElementById('out-nip-guru-ttd').innerText = document.getElementById('nip-guru').value || '.........................';
+
+            var html = preHtml + document.getElementById(elementId).innerHTML + postHtml;
+            
+            var blob = new Blob(['\ufeff', html], {
+                type: 'application/msword'
+            });
+            
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename + '.doc');
+            } else {
+                var url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+                downloadLink.download = filename + '.doc';
+                downloadLink.click();
+                URL.revokeObjectURL(url);
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
